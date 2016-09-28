@@ -6,5 +6,5 @@ install:
   - mvn clean install
   - mvn cobertura:cobertura
 after_success:
-  - mvn clean install deploy --settings settings.xml
+  - mvn deploy --settings settings.xml
   - bash <(curl -s https://codecov.io/bash)
