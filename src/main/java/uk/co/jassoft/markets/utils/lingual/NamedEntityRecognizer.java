@@ -36,6 +36,8 @@ public class NamedEntityRecognizer
 
     private final StanfordCoreNLP pipeline;
 
+    private static List<Exclusion> exclusions;
+
     public NamedEntityRecognizer(String propertiesFilePrefix)
     {
         this.pipeline = new StanfordCoreNLP(propertiesFilePrefix, false);
@@ -294,12 +296,11 @@ public class NamedEntityRecognizer
 
     private boolean isExcludedName(String name)
     {
-        List<Exclusion> exclusions = exclusionRepository.findAll();
+        if(exclusions == null) {
+            exclusions = exclusionRepository.findAll();
+        }
 
-        if(exclusions == null)
-            return false;
-
-        if(exclusions.isEmpty())
+        if(exclusions == null || exclusions.isEmpty())
             return false;
 
         for (Exclusion exclusion : exclusions)
