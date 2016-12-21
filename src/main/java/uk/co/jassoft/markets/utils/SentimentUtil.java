@@ -7,6 +7,8 @@ import uk.co.jassoft.markets.exceptions.sentiment.SentimentCalculationException;
 import uk.co.jassoft.markets.exceptions.sentiment.SentimentDifferenceCalculationException;
 import org.apache.commons.lang.time.DateUtils;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -16,6 +18,8 @@ import java.util.stream.Collectors;
  * Created by jonshaw on 03/09/15.
  */
 public class SentimentUtil {
+
+    private static final Logger LOG = LoggerFactory.getLogger(SentimentUtil.class);
 
     public static Direction getPreviousSentimentDirection(List<StorySentiment> storySentiments, Date latestQuoteDate) throws Exception {
 
@@ -77,7 +81,11 @@ public class SentimentUtil {
                 .filter(inLastDays(7))
                 .filter(isBeforeDate(latestQuoteDate))
                 .sorted((s1, s2) -> s1.getStoryDate().compareTo(s2.getStoryDate()))
-                .map(storySentiment -> new SentimentByDate(storySentiment.getStoryDate(), storySentiment.getEntitySentiment().stream().collect(Collectors.summingInt(value -> value.getSentiment()))))
+                .map(storySentiment -> {
+                        LOG.info("story Sentiment Date [{}] number of EntitySentiments [{}]", storySentiment.getStoryDate(), storySentiment.getEntitySentiment().size());
+                        return new SentimentByDate(storySentiment.getStoryDate(), storySentiment.getEntitySentiment().stream().collect(Collectors.summingInt(value -> value.getSentiment())))
+                    }
+                )
                 .collect(Collectors.groupingBy(sentimentByDate -> DateUtils.truncate(sentimentByDate.getDate(), Calendar.DATE), Collectors.summingInt(value1 -> value1.getSentiment())))
                 .entrySet().stream().sorted((o1, o2) -> o1.getKey().compareTo(o2.getKey())).map(dateIntegerEntry -> dateIntegerEntry.getValue()).collect(Collectors.toList());
     }
