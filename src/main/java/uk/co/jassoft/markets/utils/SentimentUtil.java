@@ -83,7 +83,7 @@ public class SentimentUtil {
                 .sorted((s1, s2) -> s1.getStoryDate().compareTo(s2.getStoryDate()))
                 .map(storySentiment -> {
                         LOG.info("story Sentiment Date [{}] number of EntitySentiments [{}]", storySentiment.getStoryDate(), storySentiment.getEntitySentiment().size());
-                        return new SentimentByDate(storySentiment.getStoryDate(), storySentiment.getEntitySentiment().stream().collect(Collectors.summingInt(value -> value.getSentiment())))
+                        return new SentimentByDate(storySentiment.getStoryDate(), storySentiment.getEntitySentiment().stream().collect(Collectors.summingInt(value -> value.getSentiment())));
                     }
                 )
                 .collect(Collectors.groupingBy(sentimentByDate -> DateUtils.truncate(sentimentByDate.getDate(), Calendar.DATE), Collectors.summingInt(value1 -> value1.getSentiment())))
