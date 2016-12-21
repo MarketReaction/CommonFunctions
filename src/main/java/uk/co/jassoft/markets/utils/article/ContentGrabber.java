@@ -115,12 +115,8 @@ public class ContentGrabber {
                         return value;
                 }
 
-                List<MissingDateFormat> missingDateFormats = missingDateFormatRepository.findByMetatag(metalinks.get(0).toString());
-
-                if(missingDateFormats.isEmpty()) {
-                    LOG.info("Date Format Not recognised for [{}]", metalinks.get(0).toString());
-                    missingDateFormatRepository.save(new MissingDateFormat(metalinks.get(0).toString()));
-                }
+                LOG.info("Date Format Not recognised for [{}]", metalinks.get(0).toString());
+                missingDateFormatRepository.save(new MissingDateFormat(metalinks.get(0).toString(), new Date()));
             }
             
             return null;
