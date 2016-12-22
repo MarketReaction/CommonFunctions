@@ -112,7 +112,7 @@ public class ContentGrabber {
                 if(possibleDates.size() > 1) {
                     possibleDates.sort(Date::compareTo);
                 }
-                return possibleDates.get(0);
+                return possibleDates.get(possibleDates.size() -1);
             }
 
             return null;
