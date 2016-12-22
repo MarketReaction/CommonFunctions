@@ -73,6 +73,13 @@
         </dependency>
 
         <dependency>
+            <groupId>com.joestelmach</groupId>
+            <artifactId>natty</artifactId>
+            <version>0.11</version>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
             <groupId>org.apache.velocity</groupId>
             <artifactId>velocity</artifactId>
             <optional>true</optional>

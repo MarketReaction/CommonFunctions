@@ -5,11 +5,8 @@
  */
 package uk.co.jassoft.markets.utils.article;
 
-import uk.co.jassoft.markets.datamodel.story.date.DateFormat;
-import uk.co.jassoft.markets.datamodel.story.date.MissingDateFormat;
-import uk.co.jassoft.markets.exceptions.article.ArticleContentException;
-import uk.co.jassoft.markets.repository.DateFormatRepository;
-import uk.co.jassoft.markets.repository.MissingDateFormatRepository;
+import com.joestelmach.natty.DateGroup;
+import com.joestelmach.natty.Parser;
 import de.l3s.boilerpipe.extractors.ArticleExtractor;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -20,9 +17,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import uk.co.jassoft.markets.datamodel.story.date.MissingDateFormat;
+import uk.co.jassoft.markets.exceptions.article.ArticleContentException;
+import uk.co.jassoft.markets.repository.MissingDateFormatRepository;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -39,34 +37,21 @@ public class ContentGrabber {
     private static final Logger LOG = LoggerFactory.getLogger(ContentGrabber.class);
 
     @Autowired
-    private DateFormatRepository dateFormatRepository;
-
-    @Autowired
     private MissingDateFormatRepository missingDateFormatRepository;
 
     private static final Pattern TITLE_TAG =
-            Pattern.compile("\\<title>(.*)\\</title>", Pattern.CASE_INSENSITIVE|Pattern.DOTALL);
+            Pattern.compile("\\<title>(.*)\\</title>", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
-    public void setDateFormatRepository(DateFormatRepository dateFormatRepository) {
-        this.dateFormatRepository = dateFormatRepository;
-    }
-
-    public String getContentFromWebsite(String html) throws ArticleContentException
-    {
-        try
-        {
+    public String getContentFromWebsite(String html) throws ArticleContentException {
+        try {
             return ArticleExtractor.INSTANCE.getText(html);
-        }
-        catch (Exception exception)
-        {
+        } catch (Exception exception) {
             throw new ArticleContentException("Failed to get content from website", exception);
         }
     }
 
-    public String geTitleFromWebsite(String html)
-    {
-        try
-        {
+    public String geTitleFromWebsite(String html) {
+        try {
             // extract the title
             Matcher matcher = TITLE_TAG.matcher(html);
             if (matcher.find()) {
@@ -74,55 +59,51 @@ public class ContentGrabber {
                  * include line feeds and other uglies) as well
                  * as HTML brackets with a space */
                 return matcher.group(1).replaceAll("[\\s\\<>]+", " ").trim();
-            }
-            else
+            } else
                 return null;
-        }
-        catch (Exception exception)
-        {
+        } catch (Exception exception) {
             LOG.error("Failed to get title from website", exception);
         }
 
         return null;
     }
 
-    public Date getPublishedDate(String html)
-    {
-        try
-        {
+    public Date getPublishedDate(String html) {
+        try {
             Document doc = Jsoup.parse(html);
-            
-            for(String selector : getSelectors())
-            {
+
+            for (String selector : getSelectors()) {
                 Elements metalinks = doc.select(selector);
 
-                if(metalinks.isEmpty())
+                if (metalinks.isEmpty())
                     continue;
 
-                for(int i=0; i < metalinks.size(); i++) {
+                for (int i = 0; i < metalinks.size(); i++) {
                     for (String attribute : getAttributes()) {
                         String contents = metalinks.get(i).attributes().get(attribute);
 
+                        if (contents.isEmpty()) {
+                            continue;
+                        }
+
                         Date value = getDateValue(contents);
 
-                        if(value != null)
+                        if (value != null)
                             return value;
 
                     }
                     Date value = getDateValue(metalinks.get(i).html());
 
-                    if(value != null)
+                    if (value != null)
                         return value;
                 }
 
                 LOG.info("Date Format Not recognised for [{}]", metalinks.get(0).toString());
                 missingDateFormatRepository.save(new MissingDateFormat(metalinks.get(0).toString(), new Date()));
             }
-            
+
             return null;
-        }
-        catch(Exception exception)
-        {
+        } catch (Exception exception) {
             LOG.error("Failed to get Published Date", exception);
             return null;
         }
@@ -132,46 +113,51 @@ public class ContentGrabber {
         if (contentsToCheck.isEmpty())
             return null;
 
-        final String cleanedContent = clean(contentsToCheck);
+        Parser parser = new Parser();
+        List<DateGroup> groups = parser.parse(contentsToCheck);
 
-        for (String dateFormat : getDateFormats()) {
-            try {
-                Date publishedDate = new SimpleDateFormat(dateFormat).parse(cleanedContent);
+        Date possibleDate = null;
 
+        for (DateGroup group : groups) {
+            List<Date> dates = group.getDates();
+
+            for (Date publishedDate : dates) {
                 if (new DateTime(DateTimeZone.UTC).plusDays(1).isBefore(publishedDate.getTime())) {
                     LOG.debug("Date is over 1 day in the future [{}]", publishedDate.toString());
                     continue;
                 }
 
-                return publishedDate;
-            } catch (ParseException ignored) {
+                if (possibleDate == null) {
+                    possibleDate = publishedDate;
+
+                    if (group.isTimeInferred()) {
+                        possibleDate = new DateTime(publishedDate).withTime(0, 0, 0, 0).toDate();
+                    }
+                    continue;
+                }
+
+                DateTime latestPublishedDate = new DateTime(publishedDate);
+
+                if (!group.isTimeInferred()) {
+                    possibleDate = new DateTime(possibleDate).withTime(latestPublishedDate.getHourOfDay(), latestPublishedDate.getMinuteOfHour(), latestPublishedDate.getSecondOfMinute(), latestPublishedDate.getMillisOfSecond()).toDate();
+                }
+
+                if (!group.isDateInferred()) {
+                    possibleDate = new DateTime(possibleDate).withDate(latestPublishedDate.getYear(), latestPublishedDate.getMonthOfYear(), latestPublishedDate.getDayOfMonth()).toDate();
+                }
             }
         }
 
-//        for (Locale locale : Locale.getAvailableLocales()) {
-//            try {
-//
-//                Date publishedDate = new SimpleDateFormat(LocaleProviderAdapter.getResourceBundleBased().getLocaleResources(locale)
-//                        .getDateTimePattern(3, 3, null), locale).parse(cleanedContent);
-//
-//                if (new DateTime(DateTimeZone.UTC).plusDays(1).isBefore(publishedDate.getTime())) {
-//                    LOG.debug("Date is over 1 day in the future [{}]", publishedDate.toString());
-//                    continue;
-//                }
-//
-//                return publishedDate;
-//
-//            } catch (ParseException ig\nored) {
-//            }
-//        }
+        if (possibleDate != null) {
+            return possibleDate;
+        }
 
         return null;
     }
-    
-    private List<String> getSelectors()
-    {
+
+    private List<String> getSelectors() {
         List<String> selectors = new ArrayList<>();
-        
+
         selectors.add("date");
         selectors.add("time");
         selectors.add("meta[name*=date]");
@@ -180,52 +166,13 @@ public class ContentGrabber {
 
         return selectors;
     }
-    
-    private List<String> getAttributes()
-    {
+
+    private List<String> getAttributes() {
         List<String> attribute = new ArrayList<>();
-        
-        attribute.add("datetime");
+
         attribute.add("content");
-        
+        attribute.add("datetime");
+
         return attribute;
-    }
-    
-    private List<String> getDateFormats()
-    {
-        List<String> formats = new ArrayList<>();
-
-        for(DateFormat format : dateFormatRepository.findAll())
-        {
-            formats.add(format.getFormat());
-        }
-
-        return formats;
-    }
-
-    private String clean(final String contentToClean) {
-        String cleanedContent = contentToClean.trim();
-
-        if (cleanedContent.contains("p.m.")) {
-            cleanedContent = cleanedContent.replace("p.m.", "PM");
-        }
-
-        if (cleanedContent.contains("a.m.")) {
-            cleanedContent = cleanedContent.replace("a.m.", "AM");
-        }
-
-        if (cleanedContent.contains(".")) {
-            cleanedContent = cleanedContent.replace(".", "");
-        }
-
-        if (cleanedContent.contains(",")) {
-            cleanedContent = cleanedContent.replace(",", "");
-        }
-
-        if (cleanedContent.contains("Updated ")) {
-            cleanedContent = cleanedContent.replace("Updated ", "");
-        }
-
-        return cleanedContent;
     }
 }
