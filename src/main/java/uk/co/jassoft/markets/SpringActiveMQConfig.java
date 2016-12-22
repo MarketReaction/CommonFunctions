@@ -24,6 +24,9 @@ public class SpringActiveMQConfig {
     @Value("${ACTIVEMQ_PORT_61616_TCP_PORT:61616}")
     private int activeMQPort;
 
+    @Value("${ACTIVEMQ_PREFETCH:5}")
+    private int activeMQPreFetch;
+
     private static PooledConnectionFactory pooledConnectionFactory;
 
     @Bean
@@ -31,9 +34,9 @@ public class SpringActiveMQConfig {
         if(pooledConnectionFactory == null) {
             LOG.info("ActiveMQ client connecting to Host [{}] Port [{}]", activeMQHost, activeMQPort);
 
-            ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory("failover:(tcp://" + activeMQHost + ":" + activeMQPort + ")" +
-                    "?jms.prefetchPolicy.all=5" +
-                    "&jms.redeliveryPolicy.maximumRedeliveries=1");
+            ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(String.format("failover:(tcp://%s:%s)" +
+                    "?jms.prefetchPolicy.all=%s" +
+                    "&jms.redeliveryPolicy.maximumRedeliveries=1", activeMQHost, activeMQPort, activeMQPreFetch));
 
             pooledConnectionFactory = new PooledConnectionFactory(connectionFactory);
         }
