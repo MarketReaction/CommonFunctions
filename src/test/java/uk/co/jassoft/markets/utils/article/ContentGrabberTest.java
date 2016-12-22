@@ -201,7 +201,7 @@ public class ContentGrabberTest
     public void testGetPublishedDate10()
     {
         String metaTag = "<time>Tuesday, 17 Jul 2012 | 10:00 AM ET</time>";
-        Date date = new DateTime(2012, 7, 17, 10, 00).toDate();
+        Date date = new DateTime(2012, 7, 17, 10, 00, DateTimeZone.forOffsetHours(-5)).toDate();
 
         testGetPublishedDate(metaTag, date);
     }
