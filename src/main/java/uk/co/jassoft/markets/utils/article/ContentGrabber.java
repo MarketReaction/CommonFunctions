@@ -90,6 +90,10 @@ public class ContentGrabber {
                             continue;
                         }
 
+                        if(contents.contains("validate")) {
+                            continue;
+                        }
+
                         Date value = getDateValue(contents);
 
                         if (value != null)
@@ -102,7 +106,7 @@ public class ContentGrabber {
                         possibleDates.add(value);
                 }
 
-                if(possibleDates.size() == initialSize) {
+                if(possibleDates.isEmpty()) {
                     LOG.info("Date Format Not recognised for [{}]", metalinks.get(0).toString());
                     missingDateFormatRepository.save(new MissingDateFormat(metalinks.get(0).toString(), new Date()));
                 }
