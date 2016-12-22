@@ -110,7 +110,7 @@ public class ContentGrabberTest
     public void testGetPublishedDate1()
     {
         String metaTag = "<time itemprop=\"datePublished\" content=\"2014-07-22\" datetime=\"1406043154\" pubdate>22 July 2014</time>";
-        Date date = new DateTime(2014, 7, 22, 0, 0, DateTimeZone.forOffsetHours(1)).toDate();
+        Date date = new DateTime(2014, 7, 22, 0, 0).toDate();
 
         testGetPublishedDate(metaTag, date);
     }
@@ -119,7 +119,7 @@ public class ContentGrabberTest
     public void testGetPublishedDateInValue()
     {
         String metaTag = "<time>2014-07-22</time>";
-        Date date = new DateTime(2014, 7, 22, 0, 0, DateTimeZone.forOffsetHours(1)).toDate();
+        Date date = new DateTime(2014, 7, 22, 0, 0).toDate();
 
         testGetPublishedDate(metaTag, date);
     }
@@ -201,7 +201,7 @@ public class ContentGrabberTest
     public void testGetPublishedDate10()
     {
         String metaTag = "<time>Tuesday, 17 Jul 2012 | 10:00 AM ET</time>";
-        Date date = new DateTime(2012, 7, 17, 10, 00, DateTimeZone.forOffsetHours(-4)).toDate();
+        Date date = new DateTime(2012, 7, 17, 10, 00).toDate();
 
         testGetPublishedDate(metaTag, date);
     }
