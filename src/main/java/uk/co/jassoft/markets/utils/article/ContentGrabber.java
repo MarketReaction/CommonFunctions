@@ -72,11 +72,15 @@ public class ContentGrabber {
         try {
             Document doc = Jsoup.parse(html);
 
+            List<Date> possibleDates = new ArrayList<>();
+
             for (String selector : getSelectors()) {
                 Elements metalinks = doc.select(selector);
 
                 if (metalinks.isEmpty())
                     continue;
+
+                int initialSize = possibleDates.size();
 
                 for (int i = 0; i < metalinks.size(); i++) {
                     for (String attribute : getAttributes()) {
@@ -89,17 +93,26 @@ public class ContentGrabber {
                         Date value = getDateValue(contents);
 
                         if (value != null)
-                            return value;
+                            possibleDates.add(value);
 
                     }
                     Date value = getDateValue(metalinks.get(i).html());
 
                     if (value != null)
-                        return value;
+                        possibleDates.add(value);
                 }
 
-                LOG.info("Date Format Not recognised for [{}]", metalinks.get(0).toString());
-                missingDateFormatRepository.save(new MissingDateFormat(metalinks.get(0).toString(), new Date()));
+                if(possibleDates.size() == initialSize) {
+                    LOG.info("Date Format Not recognised for [{}]", metalinks.get(0).toString());
+                    missingDateFormatRepository.save(new MissingDateFormat(metalinks.get(0).toString(), new Date()));
+                }
+            }
+
+            if(!possibleDates.isEmpty()) {
+                if(possibleDates.size() > 1) {
+                    possibleDates.sort(Date::compareTo);
+                }
+                return possibleDates.get(0);
             }
 
             return null;
