@@ -117,6 +117,8 @@ public class ContentGrabber {
         List<DateGroup> groups = parser.parse(contentsToCheck);
 
         Date possibleDate = null;
+        boolean confirmedDate = false;
+        boolean confirmedTime = false;
 
         for (DateGroup group : groups) {
             List<Date> dates = group.getDates();
@@ -125,6 +127,14 @@ public class ContentGrabber {
                 if (new DateTime(DateTimeZone.UTC).plusDays(1).isBefore(publishedDate.getTime())) {
                     LOG.debug("Date is over 1 day in the future [{}]", publishedDate.toString());
                     continue;
+                }
+
+                if(!group.isDateInferred()) {
+                    confirmedDate = true;
+                }
+
+                if(!group.isTimeInferred()) {
+                    confirmedTime = true;
                 }
 
                 if (possibleDate == null) {
@@ -148,7 +158,7 @@ public class ContentGrabber {
             }
         }
 
-        if (possibleDate != null) {
+        if (possibleDate != null && confirmedDate && confirmedTime) {
             return possibleDate;
         }
 

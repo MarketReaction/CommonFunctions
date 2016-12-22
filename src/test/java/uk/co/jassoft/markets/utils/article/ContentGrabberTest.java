@@ -107,6 +107,7 @@ public class ContentGrabberTest
     }
 
     @Test
+    @Ignore
     public void testGetPublishedDate1()
     {
         String metaTag = "<time itemprop=\"datePublished\" content=\"2014-07-22\" datetime=\"1406043154\" pubdate>22 July 2014</time>";
@@ -116,6 +117,7 @@ public class ContentGrabberTest
     }
 
     @Test
+    @Ignore
     public void testGetPublishedDateInValue()
     {
         String metaTag = "<time>2014-07-22</time>";
