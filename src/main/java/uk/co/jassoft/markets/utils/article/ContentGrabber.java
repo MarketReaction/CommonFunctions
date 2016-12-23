@@ -80,30 +80,10 @@ public class ContentGrabber {
                 if (metalinks.isEmpty())
                     continue;
 
-                int initialSize = possibleDates.size();
+                Date value = getDateValue(metalinks.get(0).toString());
 
-                for (int i = 0; i < metalinks.size(); i++) {
-                    for (String attribute : getAttributes()) {
-                        String contents = metalinks.get(i).attributes().get(attribute);
-
-                        if (contents.isEmpty()) {
-                            continue;
-                        }
-
-                        if(contents.contains("validate")) {
-                            continue;
-                        }
-
-                        Date value = getDateValue(contents);
-
-                        if (value != null)
-                            possibleDates.add(value);
-
-                    }
-                    Date value = getDateValue(metalinks.get(i).html());
-
-                    if (value != null)
-                        possibleDates.add(value);
+                if(value != null) {
+                    return value;
                 }
 
                 if(possibleDates.isEmpty()) {
@@ -134,8 +114,6 @@ public class ContentGrabber {
         List<DateGroup> groups = parser.parse(contentsToCheck);
 
         Date possibleDate = null;
-        boolean confirmedDate = false;
-        boolean confirmedTime = false;
 
         for (DateGroup group : groups) {
             List<Date> dates = group.getDates();
@@ -144,14 +122,6 @@ public class ContentGrabber {
                 if (new DateTime(DateTimeZone.UTC).plusDays(1).isBefore(publishedDate.getTime())) {
                     LOG.debug("Date is over 1 day in the future [{}]", publishedDate.toString());
                     continue;
-                }
-
-                if(!group.isDateInferred()) {
-                    confirmedDate = true;
-                }
-
-                if(!group.isTimeInferred()) {
-                    confirmedTime = true;
                 }
 
                 if (possibleDate == null) {
@@ -175,7 +145,7 @@ public class ContentGrabber {
             }
         }
 
-        if (possibleDate != null && confirmedDate && confirmedTime) {
+        if (possibleDate != null) {
             return possibleDate;
         }
 
@@ -192,14 +162,5 @@ public class ContentGrabber {
         selectors.add("meta[itemprop*=date]");
 
         return selectors;
-    }
-
-    private List<String> getAttributes() {
-        List<String> attribute = new ArrayList<>();
-
-        attribute.add("content");
-        attribute.add("datetime");
-
-        return attribute;
     }
 }

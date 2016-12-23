@@ -10,7 +10,6 @@ import org.apache.commons.io.IOUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.MockitoAnnotations;
 import uk.co.jassoft.markets.exceptions.article.ArticleContentException;
@@ -107,7 +106,6 @@ public class ContentGrabberTest
     }
 
     @Test
-    @Ignore
     public void testGetPublishedDate1()
     {
         String metaTag = "<time itemprop=\"datePublished\" content=\"2014-07-22\" datetime=\"1406043154\" pubdate>22 July 2014</time>";
@@ -117,7 +115,6 @@ public class ContentGrabberTest
     }
 
     @Test
-    @Ignore
     public void testGetPublishedDateInValue()
     {
         String metaTag = "<time>2014-07-22</time>";
@@ -127,7 +124,6 @@ public class ContentGrabberTest
     }
 
     @Test
-    @Ignore("Currently doesn't work")
     public void testGetPublishedDate2()
     {
         String metaTag = "<time itemprop=\"dateCreated\" datetime=\"2014-07-22:16:53 BST\">Tuesday, Jul 22 2014, 16:53 BST</time>";
